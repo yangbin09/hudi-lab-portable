@@ -1,0 +1,103 @@
+# =============================================================
+# Hudi Lab Portable
+#   Hadoop HDFS 3.3.6 + Apache Spark 3.3.1 + Apache Hudi 0.15.0
+#
+# 单机学习环境。三个服务：namenode / datanode / spark。
+# 项目名固定为 hudi-lab-portable，网络与卷都由本项目独占，
+# 不与其它 Docker 项目（包括旧的 hudi-lab）共享。
+# =============================================================
+name: hudi-lab-portable
+
+services:
+
+  namenode:
+    image: apache/hadoop:3.3.6
+    hostname: namenode
+    # starter.sh 末尾执行 "$@"，这里交给格式化守卫脚本
+    command: ["bash", "/opt/hudi-lab/init-namenode.sh"]
+    ports:
+      - "127.0.0.1:${NN_RPC_PORT:-19000}:9000"   # NameNode RPC（仅供宿主机调试）
+      - "127.0.0.1:${NN_WEB_PORT:-19870}:9870"   # NameNode Web UI
+    environment:
+      HDFS_NAMENODE_OPTS: "-Xmx1024m"
+      NAMENODE_DATA_DIR: /data/dfs/name
+      TZ: Asia/Shanghai
+    volumes:
+      - namenode-data:/data
+      - ./hadoop/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./hadoop/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+      - ./hadoop/init-namenode.sh:/opt/hudi-lab/init-namenode.sh:ro
+      - ./tests:/opt/hudi-lab/tests:ro
+      - ./transfer:/transfer
+    healthcheck:
+      test: ["CMD-SHELL", "hdfs dfsadmin -safemode get >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 20s
+    mem_limit: 2g
+    restart: unless-stopped
+
+  datanode:
+    image: apache/hadoop:3.3.6
+    hostname: datanode
+    command: ["hdfs", "datanode"]
+    depends_on:
+      namenode:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${DN_WEB_PORT:-19864}:9864"   # DataNode Web UI
+    environment:
+      HDFS_DATANODE_OPTS: "-Xmx1024m"
+      TZ: Asia/Shanghai
+    volumes:
+      - datanode-data:/data
+      - ./hadoop/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./hadoop/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+      - ./tests:/opt/hudi-lab/tests:ro
+      - ./transfer:/transfer
+    healthcheck:
+      test: ["CMD-SHELL", "hdfs dfsadmin -report 2>/dev/null | grep -q 'Live datanodes (1)'"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 20s
+    mem_limit: 2g
+    restart: unless-stopped
+
+  spark:
+    build:
+      context: .
+      dockerfile: docker/spark/Dockerfile
+    image: ${SPARK_IMAGE:-hudi-lab-portable-spark:0.1.0}
+    hostname: spark
+    working_dir: /workspace
+    depends_on:
+      datanode:
+        condition: service_healthy
+    command: ["tail", "-f", "/dev/null"]
+    environment:
+      HADOOP_CONF_DIR: /opt/hadoop-conf
+      TZ: Asia/Shanghai
+    volumes:
+      - spark-warehouse:/workspace/warehouse
+      - spark-metastore:/workspace/metastore
+      - ./sql:/workspace/sql:ro
+      - ./tests:/opt/hudi-lab/tests:ro
+      - ./spark/hadoop-conf:/opt/hadoop-conf:ro
+      - ./transfer:/transfer
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/spark/bin/spark-submit --version >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+    mem_limit: 6g
+    restart: unless-stopped
+
+volumes:
+  # Compose 自动加项目前缀：hudi-lab-portable_namenode-data 等
+  namenode-data:
+  datanode-data:
+  spark-warehouse:
+  spark-metastore:

@@ -1,0 +1,75 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: hudi-lab-spark
+
+jobs:
+  publish:
+    name: Build and publish Spark + Hudi image to GHCR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version tags
+        id: vars
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          SHA_SHORT="$(echo "${GITHUB_SHA}" | cut -c1-12)"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "sha=${SHA_SHORT}" >> "$GITHUB_OUTPUT"
+          echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION} sha=${SHA_SHORT}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/spark/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.vars.outputs.image }}:${{ steps.vars.outputs.version }}
+            ${{ steps.vars.outputs.image }}:sha-${{ steps.vars.outputs.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.vars.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Publish summary
+        run: |
+          echo "## GHCR release" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| item | value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| version | \`${{ steps.vars.outputs.version }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| git sha | \`${{ steps.vars.outputs.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| image | \`${{ steps.vars.outputs.image }}:${{ steps.vars.outputs.version }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| digest | \`${{ steps.build.outputs.digest }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| tags | \`${{ steps.vars.outputs.version }}\`, \`sha-${{ steps.vars.outputs.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Deploy with:" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "SPARK_IMAGE=${{ steps.vars.outputs.image }}:${{ steps.vars.outputs.version}}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

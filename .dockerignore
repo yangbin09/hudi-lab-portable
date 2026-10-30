@@ -1,0 +1,9 @@
+.git
+.gitignore
+.github
+docs
+transfer
+**/*.log
+**/*.jar
+.env
+README.md

@@ -1,0 +1,162 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check tracked files (no secrets / large artifacts)
+        run: |
+          set -euo pipefail
+          echo "--- tracked files ---"
+          git ls-files
+          if git ls-files | grep -qiE '\.(jar|tar|tar\.gz|vhdx|zip)$'; then
+            echo "::error::binary artifacts must not be committed (Hudi JAR is downloaded at build time)"
+            exit 1
+          fi
+          if git ls-files --error-unmatch .env >/dev/null 2>&1; then
+            echo "::error::.env must not be committed"
+            exit 1
+          fi
+          if git ls-files -z | xargs -0 grep -nIE 'ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}' ; then
+            echo "::error::possible GitHub token committed"
+            exit 1
+          fi
+
+      - name: Prepare .env for compose validation
+        run: cp .env.example .env
+
+      - name: Validate compose file
+        run: docker compose -f compose.yaml config --quiet
+
+      - name: Validate Hadoop / Spark XML configuration
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          files = [
+              "hadoop/core-site.xml",
+              "hadoop/hdfs-site.xml",
+              "spark/hadoop-conf/core-site.xml",
+              "spark/hadoop-conf/hdfs-site.xml",
+          ]
+          for f in files:
+              root = ET.parse(f).getroot()
+              assert root.tag == "configuration", f"{f}: root element is not <configuration>"
+              names = {p.findtext("name") for p in root.findall("property")}
+              print(f"{f}: {len(names)} properties")
+          required = {"hdfs://namenode:9000"}
+          values = set()
+          for f in files:
+              root = ET.parse(f).getroot()
+              for p in root.findall("property"):
+                  if p.findtext("name") == "fs.defaultFS":
+                      values.add(p.findtext("value"))
+          assert "hdfs://namenode:9000" in values, "fs.defaultFS must point to hdfs://namenode:9000"
+          print("fs.defaultFS OK")
+          PY
+
+      - name: Validate pinned versions
+        run: |
+          set -euo pipefail
+          grep -q '^FROM apache/spark:3.3.1' docker/spark/Dockerfile
+          grep -q 'HUDI_VERSION=0.15.0' docker/spark/Dockerfile
+          grep -q '7ade6ae19a634f94e1633781630d991b2278fe19271913c5a4a7a652b9d5fda7' docker/spark/Dockerfile
+          grep -q 'hudi-spark3.3-bundle_2.12-0.15.0.jar' spark/spark-defaults.conf
+          grep -q 'image: apache/hadoop:3.3.6' compose.yaml
+          if grep -q ':latest' compose.yaml; then
+            echo "::error::compose.yaml must not use :latest"
+            exit 1
+          fi
+          echo "version pins OK"
+
+      - name: Validate shell scripts
+        run: |
+          set -euo pipefail
+          find scripts/linux tests -name '*.sh' -print0 | xargs -0 -n1 bash -n
+          echo "bash syntax OK"
+
+      - name: Validate PowerShell syntax (Windows scripts)
+        shell: pwsh
+        run: |
+          $failed = $false
+          Get-ChildItem scripts/windows -Filter *.ps1 | ForEach-Object {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object {
+                Write-Host "::error file=$($_.Extent.File),line=$($_.Extent.StartLineNumber)::$($_.Message)"
+              }
+              $failed = $true
+            }
+          }
+          if ($failed) { exit 1 }
+          Write-Host "PowerShell syntax OK"
+
+  build:
+    name: Build Spark + Hudi image
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/spark/Dockerfile
+          push: false
+          load: true
+          tags: hudi-lab-spark:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify image contents
+        run: |
+          docker run --rm --entrypoint bash hudi-lab-spark:ci -c '
+            set -e
+            echo "7ade6ae19a634f94e1633781630d991b2278fe19271913c5a4a7a652b9d5fda7  /opt/hudi/hudi-spark3.3-bundle_2.12-0.15.0.jar" | sha256sum -c -
+            /opt/spark/bin/spark-submit --version 2>&1 | grep -q "version 3.3.1"
+            grep -q "HoodieSparkSessionExtension" /opt/spark/conf/spark-defaults.conf
+            grep -q "spark.jars" /opt/spark/conf/spark-defaults.conf
+            echo IMAGE_VERIFY_OK
+          '
+
+      - name: Compose smoke test (NameNode + DataNode health)
+        run: |
+          set -euo pipefail
+          cp .env.example .env
+          sed -i 's/^SPARK_IMAGE=.*/SPARK_IMAGE=hudi-lab-spark:ci/' .env
+          docker compose up -d namenode datanode
+          for i in $(seq 1 60); do
+            if docker compose exec -T namenode hdfs dfsadmin -report 2>/dev/null | grep -q 'Live datanodes (1)'; then
+              echo "DataNode registered"
+              break
+            fi
+            sleep 5
+          done
+          docker compose exec -T namenode hdfs dfs -mkdir -p /ci-test
+          echo "ci" | docker compose exec -T namenode hdfs dfs -put -f - /ci-test/hello.txt
+          docker compose exec -T namenode hdfs dfs -cat /ci-test/hello.txt | grep -q ci
+          docker compose logs --tail 50
+          docker compose down -v
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs --tail 200 || true

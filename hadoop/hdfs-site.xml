@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+  Hudi Lab Portable —— HDFS 3.3.6 配置（单 DataNode 学习环境）
+  NameNode RPC        9000  <- 容器内客户端连接
+  NameNode Web UI     9870
+  DataNode 数据传输    9866
+  DataNode IPC        9867
+  DataNode Web UI     9864
+-->
+<configuration>
+
+  <!-- 单副本 -->
+  <property>
+    <name>dfs.replication</name>
+    <value>1</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.name.dir</name>
+    <value>/data/dfs/name</value>
+  </property>
+
+  <property>
+    <name>dfs.datanode.data.dir</name>
+    <value>/data/dfs/data</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.rpc-address</name>
+    <value>namenode:9000</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.http-address</name>
+    <value>0.0.0.0:9870</value>
+  </property>
+
+  <property>
+    <name>dfs.datanode.address</name>
+    <value>0.0.0.0:9866</value>
+  </property>
+
+  <property>
+    <name>dfs.datanode.http.address</name>
+    <value>0.0.0.0:9864</value>
+  </property>
+
+  <property>
+    <name>dfs.datanode.ipc.address</name>
+    <value>0.0.0.0:9867</value>
+  </property>
+
+  <!-- Docker 网络适配 -->
+  <property>
+    <name>dfs.namenode.datanode.registration.ip-hostname-check</name>
+    <value>false</value>
+  </property>
+
+  <property>
+    <name>dfs.client.use.datanode.hostname</name>
+    <value>false</value>
+  </property>
+
+  <!-- 单机学习环境关闭权限检查；生产环境必须开启 -->
+  <property>
+    <name>dfs.permissions.enabled</name>
+    <value>false</value>
+  </property>
+
+  <!-- 小集群参数 -->
+  <property>
+    <name>dfs.namenode.handler.count</name>
+    <value>20</value>
+  </property>
+
+  <property>
+    <name>dfs.datanode.handler.count</name>
+    <value>10</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.accesstime.precision</name>
+    <value>0</value>
+  </property>
+
+  <property>
+    <name>dfs.webhdfs.enabled</name>
+    <value>true</value>
+  </property>
+
+</configuration>

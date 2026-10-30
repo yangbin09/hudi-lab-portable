@@ -1,0 +1,23 @@
+# 本地配置（含端口/镜像覆盖，可能因人而异）
+.env
+
+# 运行期数据
+transfer/*
+!transfer/.gitkeep
+warehouse/
+metastore/
+metastore_db/
+derby.log
+logs/
+*.log
+
+# Docker / 镜像产物
+*.tar
+*.tar.gz
+*.jar
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

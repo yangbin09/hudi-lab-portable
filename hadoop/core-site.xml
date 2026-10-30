@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+  Hudi Lab Portable —— Hadoop 3.3.6 全局配置
+  仅用于单机 Docker 学习环境，不适用于生产。
+-->
+<configuration>
+
+  <!-- HDFS 默认文件系统：Docker 网络内通过服务名 namenode 解析 -->
+  <property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://namenode:9000</value>
+  </property>
+
+  <!-- 容器内临时目录落在数据卷上，避免写容器临时层 -->
+  <property>
+    <name>hadoop.tmp.dir</name>
+    <value>/data/tmp</value>
+  </property>
+
+  <property>
+    <name>io.file.buffer.size</name>
+    <value>131072</value>
+  </property>
+
+  <!-- 学习环境关闭回收站，节省磁盘 -->
+  <property>
+    <name>fs.trash.interval</name>
+    <value>0</value>
+  </property>
+
+</configuration>

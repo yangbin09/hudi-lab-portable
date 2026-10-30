@@ -1,0 +1,23 @@
+# 统一换行，避免 Windows 上 clone 后 .sh 变成 CRLF 导致容器内执行失败
+* text=auto eol=lf
+
+*.sh          text eol=lf
+Dockerfile    text eol=lf
+*.yml         text eol=lf
+*.yaml        text eol=lf
+*.xml         text eol=lf
+*.sql         text eol=lf
+*.conf        text eol=lf
+*.properties  text eol=lf
+*.md          text eol=lf
+*.json        text eol=lf
+
+# PowerShell 脚本（UTF-8 BOM，CRLF）
+*.ps1         text eol=crlf
+*.cmd         text eol=crlf
+
+# 二进制
+*.jar         binary
+*.png         binary
+*.jpg         binary
+*.zip         binary

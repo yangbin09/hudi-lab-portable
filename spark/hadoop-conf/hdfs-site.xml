@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+  Hudi Lab Portable —— Spark 侧 HDFS 客户端配置
+  只读挂载到 /opt/hadoop-conf
+-->
+<configuration>
+
+  <property>
+    <name>dfs.replication</name>
+    <value>1</value>
+  </property>
+
+  <!-- 客户端使用 DataNode 返回的 IP（同一 Docker 网络可直达） -->
+  <property>
+    <name>dfs.client.use.datanode.hostname</name>
+    <value>false</value>
+  </property>
+
+  <property>
+    <name>dfs.client.block.write.replace-datanode-on-failure.enable</name>
+    <value>false</value>
+  </property>
+
+</configuration>
