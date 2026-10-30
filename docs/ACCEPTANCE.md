@@ -141,3 +141,17 @@ Digest: sha256:21817c68f09032a3078d742761e6b4f4beace4e9f1ca1cf388ad0cecb8c166ad
 2. **整机 Docker Desktop 重启**：未单独执行；已验证等价的容器重建 + 命名卷持久化。
 3. 单 NameNode / 单 DataNode、复制因子 1、关闭 HDFS 权限检查，仅用于学习环境。
 4. 镜像仅 `linux/amd64`，未做 ARM64 适配。
+
+## 5. 后续变更：旧环境退役
+
+2026-10-30 验收完成后，经用户确认，旧 `D:\hudi-lab` Docker 环境已退役：
+
+- 删除旧容器 `hudi-spark` / `hudi-namenode` / `hudi-datanode`；
+- 删除旧网络 `hudi-lab_default`；
+- 删除旧卷 `hudi-lab-namenode` / `hudi-lab-datanode`；
+- 删除旧镜像 `hudi-lab/spark:3.3.1-hudi-0.15.0`；
+- 删除前已将旧 HDFS 的 `/hudi-lab`（COW + MOR）与 `/datasets` 迁移到新环境，
+  并用 Spark 验证：`hdfs_cow_orders` 5 行、`hdfs_mor_orders` 5 行；
+- `D:\hudi-lab` 源码/配置目录保留，未删除。
+
+新便携环境的数据仍是本机迁移结果；其他机器 clone 后部署依旧是空 HDFS。
