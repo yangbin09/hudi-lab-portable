@@ -34,7 +34,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\bootstrap.ps1
 1. 检查 Docker Engine / Compose / Linux 模式 / 内存 / 磁盘；
 2. 从 `.env.example` 创建 `.env`；
 3. 首次部署时检查 19000 / 19870 / 19864 是否被占用；
-4. 镜像缺失时构建 `hudi-lab-portable-spark:0.1.0`；
+4. 本地没有镜像时从 GHCR 拉取；需要本地构建时自动 build；
 5. 依次启动 NameNode → DataNode → Spark，并等待健康检查；
 6. 等待 DataNode 注册、Safe Mode 关闭；
 7. 执行 HDFS / Spark / Hudi COW / Hudi MOR 冒烟测试；
@@ -127,7 +127,7 @@ SPARK_IMAGE=hudi-lab-portable-spark:0.1.0
 `.env.example` 默认已指向公共镜像：
 
 ```dotenv
-SPARK_IMAGE=ghcr.io/yangbin09/hudi-lab-spark:0.1.0
+SPARK_IMAGE=ghcr.io/yangbin09/hudi-lab-spark:0.1.1
 ```
 
 镜像为公开，`bootstrap` / `up` 会自动拉取，**无需 docker login**。

@@ -149,9 +149,9 @@ NameNode UI：<http://127.0.0.1:19870>
 
 | 项目 | 值 |
 |---|---|
-| 默认镜像（`.env.example`） | `ghcr.io/yangbin09/hudi-lab-spark:0.1.0` |
-| Git SHA 标签 | `sha-7a1a4889c79e` |
-| Digest | `sha256:a495f3641685e1c11410879fcda1e48deeea516bc8eebb7e76ec0d9edfb2b3c0` |
+| 默认镜像（`.env.example`） | `ghcr.io/yangbin09/hudi-lab-spark:0.1.1` |
+| Git SHA 标签 | `sha-0281409bdd4e` |
+| Digest | `sha256:21817c68f09032a3078d742761e6b4f4beace4e9f1ca1cf388ad0cecb8c166ad` |
 
 `bootstrap` 在本地没有该镜像时会自动执行 `docker compose pull spark`。
 镜像为公开，无需 `docker login`。

@@ -96,7 +96,7 @@ Deployment:   SUCCESS
 NN_RPC_PORT=19000
 NN_WEB_PORT=19870
 DN_WEB_PORT=19864
-SPARK_IMAGE=ghcr.io/yangbin09/hudi-lab-spark:0.1.0
+SPARK_IMAGE=ghcr.io/yangbin09/hudi-lab-spark:0.1.1
 ```
 
 `SPARK_IMAGE` 默认指向公共 GHCR 镜像，匿名可拉取，无需登录。

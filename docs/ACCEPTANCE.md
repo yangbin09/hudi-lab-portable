@@ -29,7 +29,7 @@
 | Windows bootstrap | PASS | 完整流程 SUCCESS；首次格式化与重复复用均验证 |
 | Linux bootstrap | NOT TESTED | 无 Linux 主机；16 个脚本 `bash -n` 全部通过 |
 | GitHub 仓库 | PASS | <https://github.com/yangbin09/hudi-lab-portable>（Public） |
-| GHCR 镜像发布 | PASS | `ghcr.io/yangbin09/hudi-lab-spark:0.1.0`，匿名可拉取 |
+| GHCR 镜像发布 | PASS | `ghcr.io/yangbin09/hudi-lab-spark:0.1.1`，匿名可拉取 |
 | 新机器拉取镜像 | PASS | 删除本地镜像后由 bootstrap 从 GHCR 拉取并完成全部测试 |
 | 原有环境保持完好 | PASS | 旧容器运行中，旧卷存在，COW/MOR 各 5 行可查 |
 
@@ -54,8 +54,8 @@ Deployment:   SUCCESS
 运行中的 Spark 容器镜像：
 
 ```
-ghcr.io/yangbin09/hudi-lab-spark:0.1.0
-sha256:a495f3641685e1c11410879fcda1e48deeea516bc8eebb7e76ec0d9edfb2b3c0
+ghcr.io/yangbin09/hudi-lab-spark:0.1.1
+sha256:21817c68f09032a3078d742761e6b4f4beace4e9f1ca1cf388ad0cecb8c166ad
 ```
 
 ### 2.2 Hudi 物理文件校验
@@ -108,17 +108,17 @@ PERSISTENCE_PASS
 
 | 工作流 | 结果 | 链接 |
 |---|---|---|
-| CI | success | <https://github.com/yangbin09/hudi-lab-portable/actions/runs/41056646690> |
-| Release | success | <https://github.com/yangbin09/hudi-lab-portable/actions/runs/41056790911> |
+| CI | success | <https://github.com/yangbin09/hudi-lab-portable/actions/runs/41059572430> |
+| Release | success | <https://github.com/yangbin09/hudi-lab-portable/actions/runs/41059580167> |
 
-发布标签：`0.1.0`、`sha-7a1a4889c79e`。
+发布标签：`0.1.0`、`sha-0281409bdd4e`。
 
 匿名拉取验证：
 
 ```
 docker logout ghcr.io
-docker pull ghcr.io/yangbin09/hudi-lab-spark:0.1.0
-Digest: sha256:a495f3641685e1c11410879fcda1e48deeea516bc8eebb7e76ec0d9edfb2b3c0
+docker pull ghcr.io/yangbin09/hudi-lab-spark:0.1.1
+Digest: sha256:21817c68f09032a3078d742761e6b4f4beace4e9f1ca1cf388ad0cecb8c166ad
 ```
 
 ## 3. 开发过程中发现并修复的问题
