@@ -145,26 +145,34 @@ NameNode UI：<http://127.0.0.1:19870>
 
 ## 镜像
 
-Spark + Hudi 镜像在构建时从 Maven Central 下载固定版本 JAR 并校验 SHA256，
-不依赖宿主机已有 JAR，也不把 JAR 提交进 Git。
+已发布到 GHCR（公共镜像，匿名可拉取）：
 
-- 本地默认镜像：`hudi-lab-portable-spark:0.1.0`（缺失时 `bootstrap` 自动构建）
-- GHCR 发布镜像：`ghcr.io/<github-owner>/hudi-lab-spark:0.1.0`
+| 项目 | 值 |
+|---|---|
+| 默认镜像（`.env.example`） | `ghcr.io/yangbin09/hudi-lab-spark:0.1.0` |
+| Git SHA 标签 | `sha-7a1a4889c79e` |
+| Digest | `sha256:a495f3641685e1c11410879fcda1e48deeea516bc8eebb7e76ec0d9edfb2b3c0` |
 
-使用 GHCR 镜像时，在 `.env` 中设置：
+`bootstrap` 在本地没有该镜像时会自动执行 `docker compose pull spark`。
+镜像为公开，无需 `docker login`。
+
+需要完全本地构建时，在 `.env` 中设置：
 
 ```dotenv
-SPARK_IMAGE=ghcr.io/<github-owner>/hudi-lab-spark:0.1.0
+SPARK_IMAGE=hudi-lab-portable-spark:0.1.0
 ```
 
-然后重新执行 `bootstrap`。若镜像为私有：
+然后执行：
 
 ```bash
-docker login ghcr.io
+docker compose build spark
 ```
 
-> GHCR 发布由 Git Tag 触发的 `.github/workflows/release.yml` 完成。
-> 本仓库首次发布前，请以仓库实际 Actions 结果为准。
+镜像构建时从 Maven Central 下载固定版本 Hudi JAR 并校验 SHA256，
+不依赖宿主机已有 JAR，也不把 JAR 提交进 Git。
+
+发布由 `.github/workflows/release.yml` 在 `v*` 标签触发，发布记录见
+[GitHub Actions](https://github.com/yangbin09/hudi-lab-portable/actions)。
 
 ---
 

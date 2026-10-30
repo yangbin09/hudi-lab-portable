@@ -49,13 +49,14 @@ try {
     Write-Section '3/8 启动 NameNode'
     if ((Invoke-Compose @('up', '-d', 'namenode')) -ne 0) { throw '启动 namenode 失败' }
     Wait-ServiceHealthy -Service 'namenode' -TimeoutSeconds $TimeoutSeconds
-    Wait-HdfsSafeModeOff -TimeoutSeconds $TimeoutSeconds
 
     # ---------------------------------------------------------
+    # Safe Mode 必须等 DataNode 汇报块后才能关闭，因此不能提前等待
     Write-Section '4/8 启动 DataNode'
     if ((Invoke-Compose @('up', '-d', 'datanode')) -ne 0) { throw '启动 datanode 失败' }
     Wait-ServiceHealthy -Service 'datanode' -TimeoutSeconds $TimeoutSeconds
     Wait-LiveDataNodes -Expected 1 -TimeoutSeconds $TimeoutSeconds
+    Wait-HdfsSafeModeOff -TimeoutSeconds $TimeoutSeconds
 
     # ---------------------------------------------------------
     Write-Section '5/8 启动 Spark'
@@ -115,8 +116,9 @@ try {
             if ((Invoke-Compose @('up', '-d')) -ne 0) { throw 'docker compose up 失败' }
             Wait-ServiceHealthy -Service 'namenode' -TimeoutSeconds $TimeoutSeconds
             Wait-ServiceHealthy -Service 'datanode' -TimeoutSeconds $TimeoutSeconds
-            Wait-ServiceHealthy -Service 'spark' -TimeoutSeconds $TimeoutSeconds
+            Wait-LiveDataNodes -Expected 1 -TimeoutSeconds $TimeoutSeconds
             Wait-HdfsSafeModeOff -TimeoutSeconds $TimeoutSeconds
+            Wait-ServiceHealthy -Service 'spark' -TimeoutSeconds $TimeoutSeconds
 
             $markerOut = (& docker compose --project-directory $script:RepoRoot -f $script:ComposeFile exec -T namenode hdfs dfs -cat "/tmp/hudi-lab-portable-test/$runId/persist.txt" 2>$null) -join "`n"
             $markerOk = ($markerOut.Trim() -eq $marker)

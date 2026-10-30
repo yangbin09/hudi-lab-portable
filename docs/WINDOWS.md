@@ -124,17 +124,23 @@ SPARK_IMAGE=hudi-lab-portable-spark:0.1.0
 
 ## 8. 使用 GHCR 镜像
 
+`.env.example` 默认已指向公共镜像：
+
 ```dotenv
-SPARK_IMAGE=ghcr.io/<github-owner>/hudi-lab-spark:0.1.0
+SPARK_IMAGE=ghcr.io/yangbin09/hudi-lab-spark:0.1.0
+```
+
+镜像为公开，`bootstrap` / `up` 会自动拉取，**无需 docker login**。
+
+如需本地构建：
+
+```dotenv
+SPARK_IMAGE=hudi-lab-portable-spark:0.1.0
 ```
 
 ```powershell
-docker login ghcr.io    # 私有镜像才需要
-.\scripts\windows\up.ps1
+docker compose build spark
 ```
-
-`bootstrap` / `up` 发现本地没有该镜像时会执行 `docker compose pull spark`。
-拉取失败且本地也没有镜像时，会明确报错，不会静默回退。
 
 ## 9. 数据位置
 

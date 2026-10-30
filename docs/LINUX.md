@@ -96,18 +96,19 @@ Deployment:   SUCCESS
 NN_RPC_PORT=19000
 NN_WEB_PORT=19870
 DN_WEB_PORT=19864
-SPARK_IMAGE=ghcr.io/<github-owner>/hudi-lab-spark:0.1.0
+SPARK_IMAGE=ghcr.io/yangbin09/hudi-lab-spark:0.1.0
+```
+
+`SPARK_IMAGE` 默认指向公共 GHCR 镜像，匿名可拉取，无需登录。
+私有镜像才需要：
+
+```bash
+echo "<token>" | docker login ghcr.io -u <github-user> --password-stdin
 ```
 
 ```bash
 ./scripts/linux/down.sh
 ./scripts/linux/up.sh
-```
-
-私有 GHCR 镜像需要先登录：
-
-```bash
-echo "<token>" | docker login ghcr.io -u <github-user> --password-stdin
 ```
 
 ## 8. 数据位置

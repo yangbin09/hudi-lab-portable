@@ -155,11 +155,25 @@ Bash 脚本：
 - 不使用 `latest`；
 - 在 Job Summary 输出 digest 与部署用 `SPARK_IMAGE` 值。
 
-发布后使用固定版本：
+首个正式版本 `v0.1.0` 已发布：
+
+| 项目 | 值 |
+|---|---|
+| 镜像 | `ghcr.io/yangbin09/hudi-lab-spark:0.1.0` |
+| Git SHA 标签 | `sha-7a1a4889c79e` |
+| Digest | `sha256:a495f3641685e1c11410879fcda1e48deeea516bc8eebb7e76ec0d9edfb2b3c0` |
+| 可见性 | public（匿名可拉取） |
+| Release Run | <https://github.com/yangbin09/hudi-lab-portable/actions/runs/41056790911> |
+| CI Run | <https://github.com/yangbin09/hudi-lab-portable/actions/runs/41056646690> |
+
+部署使用固定版本：
 
 ```dotenv
-SPARK_IMAGE=ghcr.io/<github-owner>/hudi-lab-spark:0.1.0
+SPARK_IMAGE=ghcr.io/yangbin09/hudi-lab-spark:0.1.0
 ```
+
+已验证：删除本地镜像后执行 `bootstrap` 会从 GHCR 拉取并完成全部测试；
+`docker logout ghcr.io` 后仍可匿名拉取。
 
 ## 11. 本地开发流程
 

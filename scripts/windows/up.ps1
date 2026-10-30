@@ -19,9 +19,9 @@ try {
 
     Wait-ServiceHealthy -Service 'namenode' -TimeoutSeconds $TimeoutSeconds
     Wait-ServiceHealthy -Service 'datanode' -TimeoutSeconds $TimeoutSeconds
-    Wait-ServiceHealthy -Service 'spark' -TimeoutSeconds $TimeoutSeconds
-    Wait-HdfsSafeModeOff -TimeoutSeconds $TimeoutSeconds
     Wait-LiveDataNodes -Expected 1 -TimeoutSeconds $TimeoutSeconds
+    Wait-HdfsSafeModeOff -TimeoutSeconds $TimeoutSeconds
+    Wait-ServiceHealthy -Service 'spark' -TimeoutSeconds $TimeoutSeconds
 
     Show-DeploymentSummary
     exit 0

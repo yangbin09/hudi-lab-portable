@@ -54,13 +54,14 @@ ensure_spark_image
 section "3/8 启动 NameNode"
 docker_compose up -d namenode
 wait_service_healthy namenode "${TIMEOUT}"
-wait_safemode_off "${TIMEOUT}"
 
 # ---------------------------------------------------------
+# Safe Mode 必须等 DataNode 汇报块后才能关闭，不能提前等待
 section "4/8 启动 DataNode"
 docker_compose up -d datanode
 wait_service_healthy datanode "${TIMEOUT}"
 wait_live_datanodes 1 "${TIMEOUT}"
+wait_safemode_off "${TIMEOUT}"
 
 # ---------------------------------------------------------
 section "5/8 启动 Spark"
@@ -111,8 +112,9 @@ if [ "${SKIP_TESTS}" -eq 0 ]; then
     docker_compose up -d
     wait_service_healthy namenode "${TIMEOUT}"
     wait_service_healthy datanode "${TIMEOUT}"
-    wait_service_healthy spark "${TIMEOUT}"
+    wait_live_datanodes 1 "${TIMEOUT}"
     wait_safemode_off "${TIMEOUT}"
+    wait_service_healthy spark "${TIMEOUT}"
 
     MARKER_OUT="$(docker_compose exec -T namenode hdfs dfs -cat "/tmp/hudi-lab-portable-test/${RUN_ID}/persist.txt" 2>/dev/null | tr -d '\r' | head -1 || true)"
     if [ "${MARKER_OUT}" = "${MARKER}" ] \

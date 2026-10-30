@@ -18,8 +18,8 @@ ensure_spark_image
 docker_compose up -d
 wait_service_healthy namenode "${TIMEOUT}"
 wait_service_healthy datanode "${TIMEOUT}"
-wait_service_healthy spark "${TIMEOUT}"
-wait_safemode_off "${TIMEOUT}"
 wait_live_datanodes 1 "${TIMEOUT}"
+wait_safemode_off "${TIMEOUT}"
+wait_service_healthy spark "${TIMEOUT}"
 
 show_summary
